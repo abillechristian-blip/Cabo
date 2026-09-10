@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Wayne Gang</title>
+<link rel="icon" href="data:," />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ LOGIN ============ -->
+  <div id="screen-login" class="login-screen">
+    <div id="login-logo-slot"></div>
+    <div>
+      <h1>Wayne Gang</h1>
+      <p>Cabo Weekend Drink Games</p>
+    </div>
+
+    <div class="field-block">
+      <label for="name-input">Your name</label>
+      <input id="name-input" class="name-input" type="text" placeholder="e.g. Jerome" autocomplete="off" />
+    </div>
+
+    <div class="field-block">
+      <label>Your room</label>
+      <div class="room-grid" id="room-grid"></div>
+    </div>
+
+    <button id="enter-btn" class="enter-btn" disabled>Enter</button>
+  </div>
+
+  <!-- ============ MAIN APP (post-login) ============ -->
+  <div id="main-app" class="hidden" style="display:flex; flex-direction:column; flex:1;">
+
+    <div class="topbar">
+      <div class="logo" id="topbar-logo-slot"></div>
+      <div class="who">
+        <div class="name" id="who-name"></div>
+        <div class="room" id="who-room"></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="switch-room-btn" title="Switch room">⇄</button>
+    </div>
+
+    <!-- ---- Games screen ---- -->
+    <div id="screen-games" class="screen">
+      <div class="section-title">Weekend Drink Games</div>
+      <div id="games-list"></div>
+    </div>
+
+    <!-- ---- Leaderboard screen ---- -->
+    <div id="screen-leaderboard" class="screen hidden">
+      <div class="leader-strip" id="leader-strip">
+        <div class="dot" id="leader-dot"></div>
+        <div class="text" id="leader-text">No logs yet</div>
+      </div>
+      <div id="lb-boxes"></div>
+      <div class="feed-title">Live Feed</div>
+      <div id="lb-feed"></div>
+    </div>
+
+    <!-- ---- Info screen ---- -->
+    <div id="screen-info" class="screen hidden">
+      <div class="info-card">
+        <h2>Itinerary</h2>
+        <div class="itin-row"><div class="itin-day">Friday</div><div class="itin-detail">Check-in — 3:00 PM</div></div>
+        <div class="itin-row"><div class="itin-day">Saturday</div><div class="itin-detail">Boat — 9:30 AM</div></div>
+        <div class="itin-row"><div class="itin-day">Sunday</div><div class="itin-detail">Jules's Birthday 🎉</div></div>
+        <div class="itin-row"><div class="itin-day">Monday</div><div class="itin-detail">Checkout — 12:00 PM</div></div>
+      </div>
+
+      <div class="info-card">
+        <h2>Rooms</h2>
+        <div class="room-list" id="room-list-info"></div>
+      </div>
+
+      <div class="info-card">
+        <h2>How scoring works</h2>
+        <div class="itin-detail" style="line-height:1.5;">
+          Each of the 5 games is its own contest. Whoever's room drinks the most of that game's drink by the end of the weekend wins it. The Swim-Up Bar Circuit counts each of the 5 bars separately. If the whole weekend ends in a tie, Maria picks a day — whichever tied room drank most that day wins. Still tied? She picks another day.
+        </div>
+      </div>
+
+      <div class="admin-link">
+        <button id="open-admin-btn">Admin</button>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn active" data-screen="games"><span class="ic">🍹</span>Games</button>
+      <button class="nav-btn" data-screen="leaderboard"><span class="ic">🏆</span>Leaderboard</button>
+      <button class="nav-btn" data-screen="info"><span class="ic">ℹ️</span>Info</button>
+    </div>
+  </div>
+
+  <!-- ============ ADMIN ============ -->
+  <div id="screen-admin-pin" class="hidden">
+    <div class="pin-pad">
+      <h2>Admin Access</h2>
+      <div class="pin-dots" id="pin-dots"></div>
+      <div class="pin-error" id="pin-error"></div>
+      <div class="pin-keys" id="pin-keys"></div>
+      <button class="icon-btn" id="cancel-admin-btn">Cancel</button>
+    </div>
+  </div>
+
+  <div id="screen-admin-panel" class="screen hidden">
+    <div class="topbar" style="position:static; margin: -20px -16px 20px;">
+      <div class="who"><div class="name">Admin Panel</div></div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="close-admin-btn">Close</button>
+    </div>
+
+    <div class="admin-section">
+      <h3>Manual Point Adjustment</h3>
+      <div class="adjust-form">
+        <select id="adj-room"></select>
+        <select id="adj-game"></select>
+        <select id="adj-subgame" class="hidden"></select>
+        <input id="adj-amount" type="number" value="1" placeholder="Amount (use -1 to subtract)" />
+        <button id="adj-submit">Apply Adjustment</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3>Reset a Game</h3>
+      <div class="reset-form">
+        <select id="reset-game"></select>
+        <button id="reset-submit">Wipe This Game's Logs</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3>Full Audit Log</h3>
+      <div id="audit-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

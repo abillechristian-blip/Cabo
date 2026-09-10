@@ -1,0 +1,808 @@
+/* ============================================================
+   Wayne Gang — Design tokens
+   Fantasy-football / sports-app energy: dark scoreboard base,
+   condensed bold numerals, three functional team accent colors.
+   ============================================================ */
+
+:root {
+  --bg: #0b0e14;
+  --surface: #151a23;
+  --surface-raised: #1c2330;
+  --border: #262d3a;
+  --text: #f5f7fa;
+  --text-muted: #8b94a6;
+
+  --room-1: #ffcd00;
+  --room-2: #2f6fed;
+  --room-3: #e5383b;
+
+  --team-color: var(--room-1); /* set dynamically once a room is chosen */
+
+  --radius: 14px;
+  --tap-min: 56px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior-y: contain;
+}
+
+h1,
+h2,
+h3,
+.stat,
+.score {
+  font-family: "Oswald", "Inter", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+input {
+  font-family: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------------- App shell ---------------- */
+
+#app {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  min-height: 100dvh;
+}
+
+.screen {
+  flex: 1;
+  padding: 20px 16px 100px;
+  overflow-y: auto;
+}
+
+/* ---------------- Top bar ---------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.topbar .logo {
+  width: 40px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.topbar .who {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.topbar .who .name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.topbar .who .room {
+  font-size: 12.5px;
+  color: var(--team-color);
+  font-weight: 600;
+}
+
+.topbar .spacer {
+  flex: 1;
+}
+
+.icon-btn {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 20px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.icon-btn:active {
+  background: var(--surface-raised);
+}
+
+/* ---------------- Login screen ---------------- */
+
+.login-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+  gap: 28px;
+}
+
+.login-screen .logo-big,
+svg.login-logo {
+  width: min(60vw, 220px);
+  height: auto;
+}
+
+svg.topbar-logo {
+  width: 40px;
+  height: auto;
+  display: block;
+}
+
+.login-screen h1 {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.login-screen p {
+  color: var(--text-muted);
+  font-size: 14.5px;
+  margin: 0;
+}
+
+.field-block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.field-block label {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.name-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+}
+
+.name-input:focus {
+  outline: 2px solid var(--room-1);
+  outline-offset: 1px;
+}
+
+.room-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.room-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--text);
+  min-height: var(--tap-min);
+  text-align: left;
+}
+
+.room-choice .room-name {
+  font-family: "Oswald", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.room-choice .room-members {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.room-choice .swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.room-choice:active {
+  transform: scale(0.98);
+}
+
+.room-choice.room-1 .swatch { background: var(--room-1); }
+.room-choice.room-2 .swatch { background: var(--room-2); }
+.room-choice.room-3 .swatch { background: var(--room-3); }
+
+.enter-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--team-color);
+  color: #0b0e14;
+  font-family: "Oswald", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  min-height: var(--tap-min);
+}
+
+.enter-btn:disabled {
+  opacity: 0.4;
+}
+
+/* ---------------- Game cards (home screen) ---------------- */
+
+.section-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 4px 0 12px;
+}
+
+.game-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.game-card .game-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.game-card h2 {
+  font-size: 19px;
+}
+
+.game-card .subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.room-counts {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.room-count {
+  flex: 1;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.room-count .num {
+  font-family: "Oswald", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.room-count .label {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.log-btn {
+  width: 100%;
+  min-height: var(--tap-min);
+  border-radius: 10px;
+  background: var(--team-color);
+  color: #0b0e14;
+  font-family: "Oswald", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.log-btn:active {
+  transform: scale(0.98);
+}
+
+.log-btn.saving {
+  opacity: 0.6;
+}
+
+.log-fail {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--room-3);
+  text-align: center;
+}
+
+/* Multi (swim-up bar circuit) */
+
+.subgame-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.subgame-tile {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.subgame-tile .name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.subgame-tile .mini-counts {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.subgame-tile .mini-counts span.lead {
+  font-weight: 700;
+}
+
+.subgame-tile button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 8px;
+  background: var(--team-color);
+  color: #0b0e14;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* Wheel */
+
+.wheel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.wheel-outer {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 18px solid var(--text);
+  z-index: 2;
+}
+
+.wheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transition: transform 4s cubic-bezier(0.15, 0.85, 0.25, 1);
+  border: 3px solid var(--border);
+}
+
+.wheel-result {
+  font-family: "Oswald", sans-serif;
+  font-size: 20px;
+  min-height: 26px;
+}
+
+.wheel-note {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.spin-btn {
+  width: 100%;
+  min-height: var(--tap-min);
+  border-radius: 10px;
+  background: var(--team-color);
+  color: #0b0e14;
+  font-family: "Oswald", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.spin-btn:disabled {
+  opacity: 0.5;
+}
+
+.confirm-shot {
+  width: 100%;
+  min-height: var(--tap-min);
+  border-radius: 10px;
+  background: transparent;
+  border: 2px solid var(--team-color);
+  color: var(--text);
+  font-family: "Oswald", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ---------------- Leaderboard ---------------- */
+
+.leader-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 18px;
+  position: sticky;
+  top: 66px;
+  z-index: 4;
+}
+
+.leader-strip .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.leader-strip .text {
+  font-family: "Oswald", sans-serif;
+  font-size: 15px;
+}
+
+.lb-box {
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.lb-box.lead-1 { background: var(--room-1); }
+.lb-box.lead-2 { background: var(--room-2); color: #fff; }
+.lb-box.lead-3 { background: var(--room-3); color: #fff; }
+
+.lb-box.lead-1 .lb-title,
+.lb-box.lead-1 .lb-row { color: #0b0e14; }
+
+.lb-box.split {
+  background: linear-gradient(90deg, var(--split-a) 0%, var(--split-a) 49.5%, var(--split-b) 50.5%, var(--split-b) 100%);
+}
+
+.lb-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.lb-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 2px 0;
+}
+
+.lb-row .n {
+  font-weight: 700;
+}
+
+.feed-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 24px 0 10px;
+}
+
+.feed-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+
+.feed-item .who {
+  color: var(--text);
+}
+
+.feed-item .who .room-tag {
+  font-weight: 700;
+}
+
+.feed-item .when {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.empty-note {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ---------------- Info screen ---------------- */
+
+.info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.info-card h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.itin-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.itin-row:last-child {
+  border-bottom: none;
+}
+
+.itin-day {
+  font-family: "Oswald", sans-serif;
+  font-size: 13px;
+  width: 78px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.itin-detail {
+  font-size: 14px;
+}
+
+.room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.room-list .r {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.room-list .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.admin-link {
+  text-align: center;
+  padding: 20px 0 4px;
+}
+
+.admin-link button {
+  background: none;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-decoration: underline;
+}
+
+/* ---------------- Bottom nav ---------------- */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 6;
+}
+
+.bottom-nav button {
+  flex: 1;
+  background: none;
+  color: var(--text-muted);
+  padding: 12px 0 calc(10px + env(safe-area-inset-bottom));
+  font-size: 12.5px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.bottom-nav button .ic {
+  font-size: 19px;
+}
+
+.bottom-nav button.active {
+  color: var(--team-color);
+}
+
+/* ---------------- Admin ---------------- */
+
+.pin-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px 24px;
+}
+
+.pin-dots {
+  display: flex;
+  gap: 14px;
+}
+
+.pin-dots .d {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+
+.pin-dots .d.filled {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.pin-keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.pin-keys button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: "Oswald", sans-serif;
+  font-size: 20px;
+  padding: 18px 0;
+  border-radius: 12px;
+}
+
+.pin-keys button:active {
+  background: var(--surface-raised);
+}
+
+.pin-error {
+  color: var(--room-3);
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.admin-section {
+  margin-bottom: 22px;
+}
+
+.admin-section h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.audit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  gap: 8px;
+}
+
+.audit-row .meta {
+  flex: 1;
+}
+
+.audit-row button {
+  background: var(--room-3);
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.adjust-form,
+.reset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adjust-form select,
+.adjust-form input,
+.reset-form select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.adjust-form button,
+.reset-form button {
+  min-height: 48px;
+  border-radius: 8px;
+  background: var(--room-1);
+  color: #0b0e14;
+  font-weight: 600;
+}
+
+.reset-form button {
+  background: var(--room-3);
+  color: #fff;
+}

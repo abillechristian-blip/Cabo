@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // The "logs" collection holds every drink log and admin adjustment.
+    // This app has no user accounts, so access is open to anyone who has
+    // your Firebase config (i.e. anyone with the app link) — reasonable
+    // for a private group app, not something to reuse for sensitive data.
+    match /logs/{logId} {
+      allow read, write: if true;
+    }
+
+    // Everything else stays locked down.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
