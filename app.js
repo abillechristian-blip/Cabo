@@ -233,6 +233,11 @@ async function logDrink(gameId, subGameId, btnEl) {
 function renderGamesList() {
   const list = document.getElementById("games-list");
   list.innerHTML = "";
+
+  // Live overall summary — simple ticker, not a podium, so it doesn't read
+  // like it's the point of the app.
+  list.insertAdjacentHTML("beforeend", tickerHtmlFromCounts("Most Drinks Overall", totalDrinksByRoom()));
+
   GAMES.forEach((game) => {
     const card = document.createElement("div");
     card.className = "game-card";
@@ -432,24 +437,28 @@ function scoringUnits() {
   return units;
 }
 
-function leaderOf(gameId, subGameId) {
-  const counts = Object.values(ROOMS).map((r) => ({
-    room: r.id,
-    n: countFor(gameId, subGameId, r.id),
-  }));
-  const max = Math.max(...counts.map((c) => c.n));
-  const leaders = counts.filter((c) => c.n === max && max > 0);
-  return { leaders: leaders.map((l) => l.room), max, counts };
-}
-
 const RANK_HEIGHT = { 1: 84, 2: 56, 3: 36 };
 const RANK_LABEL = { 1: "1st", 2: "2nd", 3: "3rd" };
 
-function podiumHtml(gameId, subGameId, gameName) {
-  const raw = Object.values(ROOMS).map((r) => ({
-    room: r,
-    n: countFor(gameId, subGameId, r.id),
-  }));
+function tickerHtmlFromCounts(title, countsByRoom) {
+  const items = Object.values(ROOMS)
+    .map(
+      (r) => `
+      <div class="ticker-item">
+        <div class="ticker-room" style="color:${r.color}">${r.label}</div>
+        <div class="ticker-num" style="color:${r.color}">${countsByRoom[r.id] || 0}</div>
+      </div>`
+    )
+    .join("");
+  return `
+    <div class="ticker-box">
+      <div class="ticker-title">${title}</div>
+      <div class="ticker-row">${items}</div>
+    </div>`;
+}
+
+function podiumHtmlFromCounts(title, countsByRoom) {
+  const raw = Object.values(ROOMS).map((r) => ({ room: r, n: countsByRoom[r.id] || 0 }));
   const maxN = Math.max(...raw.map((c) => c.n));
 
   const withRank = raw.map((c) => ({
@@ -481,40 +490,41 @@ function podiumHtml(gameId, subGameId, gameName) {
 
   return `
     <div class="podium-box">
-      <div class="podium-title">${gameName}</div>
+      <div class="podium-title">${title}</div>
       <div class="podium-row">${slots}</div>
     </div>`;
 }
 
-function renderLeaderboard() {
-  // Overall leader = room with the most "unit wins" (outright, non-tied leads)
-  const wins = { 1: 0, 2: 0, 3: 0 };
-  scoringUnits().forEach((u) => {
-    const { leaders } = leaderOf(u.gameId, u.subGameId);
-    if (leaders.length === 1) wins[leaders[0]]++;
+function podiumHtml(gameId, subGameId, gameName) {
+  const countsByRoom = {};
+  Object.values(ROOMS).forEach((r) => {
+    countsByRoom[r.id] = countFor(gameId, subGameId, r.id);
   });
-  const topWins = Math.max(...Object.values(wins));
-  const overallLeaders = Object.entries(wins)
-    .filter(([, w]) => w === topWins)
-    .map(([room]) => Number(room));
+  return podiumHtmlFromCounts(gameName, countsByRoom);
+}
 
-  const strip = document.getElementById("leader-strip");
-  const dot = document.getElementById("leader-dot");
-  const text = document.getElementById("leader-text");
-  if (topWins === 0) {
-    dot.style.background = "#8b94a6";
-    text.textContent = "No logs yet";
-  } else if (overallLeaders.length === 1) {
-    const r = ROOMS[overallLeaders[0]];
-    dot.style.background = r.color;
-    text.textContent = `${r.label} leads overall`;
-  } else {
-    dot.style.background = "linear-gradient(90deg,#fff,#fff)";
-    text.textContent = `${overallLeaders.map((r) => ROOMS[r].label).join(" & ")} tied for the overall lead`;
-  }
+function totalDrinksByRoom() {
+  const totals = { 1: 0, 2: 0, 3: 0 };
+  scoringUnits().forEach((u) => {
+    Object.values(ROOMS).forEach((r) => {
+      totals[r.id] += countFor(u.gameId, u.subGameId, r.id);
+    });
+  });
+  return totals;
+}
 
+function renderLeaderboard() {
   const boxes = document.getElementById("lb-boxes");
   boxes.innerHTML = "";
+
+  // A real 10th point: whichever room has the most drinks logged across
+  // everything combined wins this outright — shown first since it's the
+  // "big picture" category.
+  boxes.insertAdjacentHTML(
+    "beforeend",
+    podiumHtmlFromCounts("Most Drinks Overall", totalDrinksByRoom())
+  );
+
   scoringUnits().forEach((u) => {
     boxes.insertAdjacentHTML("beforeend", podiumHtml(u.gameId, u.subGameId, u.name));
   });
