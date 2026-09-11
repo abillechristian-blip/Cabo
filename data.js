@@ -27,7 +27,7 @@ export const GAMES = [
     name: "Shot Roulette",
     type: "wheel",
     subtitle: "Spin it, drink it. No respins.",
-    segments: ["Tequila", "Whiskey", "Vodka", "Rum", "Mezcal", "Mystery Shot"],
+    segments: ["Tequila", "Whiskey", "Vodka", "Rum", "Mezcal", "Jules's Choice"],
   },
   {
     id: "swim-up-bar",
