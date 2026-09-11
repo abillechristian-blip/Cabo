@@ -267,7 +267,7 @@ function renderGamesList() {
     if (lockedGames[game.id]) {
       card.classList.add("locked");
       card.innerHTML = `
-        <div class="point-badge">${game.type === "multi" ? "5 Points" : "1 Point"}</div>
+        <div class="point-badge">${game.type === "multi" ? "5 Wayne Tokens" : "1 Wayne Token"}</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         <div class="locked-note">🔒 Locked right now — check back soon.</div>
@@ -278,7 +278,7 @@ function renderGamesList() {
 
     if (game.type === "simple") {
       card.innerHTML = `
-        <div class="point-badge">1 Point</div>
+        <div class="point-badge">1 Wayne Token</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         ${yourScoreHtml(game.id, null)}
@@ -290,7 +290,7 @@ function renderGamesList() {
       );
     } else if (game.type === "multi") {
       card.innerHTML = `
-        <div class="point-badge">5 Points</div>
+        <div class="point-badge">5 Wayne Tokens</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         <div class="bar-list">
@@ -331,7 +331,7 @@ function renderGamesList() {
       const onCooldown = remainingMs > 0;
 
       card.innerHTML = `
-        <div class="point-badge">1 Point</div>
+        <div class="point-badge">1 Wayne Token</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         ${yourScoreHtml(game.id, null)}
@@ -378,6 +378,7 @@ function yourScoreHtml(gameId, subGameId) {
   return `
     <div class="your-score">
       <div class="your-score-num" style="color:${room.color}">${n}</div>
+      <div class="your-score-label">Points</div>
     </div>`;
 }
 
@@ -505,6 +506,7 @@ function tickerHtmlFromCounts(title, countsByRoom) {
       <div class="ticker-item">
         <div class="ticker-room" style="color:${r.color}">${r.label}</div>
         <div class="ticker-num" style="color:${r.color}">${countsByRoom[r.id] || 0}</div>
+        <div class="ticker-points-label">Points</div>
       </div>`
     )
     .join("");
@@ -548,7 +550,7 @@ function podiumHtmlFromCounts(title, countsByRoom) {
 
   return `
     <div class="podium-box">
-      <div class="point-badge">1 Point</div>
+      <div class="point-badge">1 Wayne Token</div>
       <div class="podium-title">${title}</div>
       <div class="podium-row">${slots}</div>
     </div>`;
