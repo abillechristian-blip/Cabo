@@ -326,7 +326,7 @@ svg.topbar-logo {
 
 .ticker-title {
   font-family: "WayneGangScript", "Oswald", sans-serif;
-  font-size: 16px;
+  font-size: 19px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -500,8 +500,8 @@ svg.topbar-logo {
 
 .bar-name {
   font-family: "WayneGangScript", "Oswald", sans-serif;
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 400;
 }
 
 .bar-your-score {
@@ -632,7 +632,7 @@ svg.topbar-logo {
 
 .podium-title {
   font-family: "WayneGangScript", "Oswald", sans-serif;
-  font-size: 16px;
+  font-size: 19px;
   margin-bottom: 14px;
   text-align: center;
 }
@@ -736,7 +736,7 @@ svg.topbar-logo {
 }
 
 .info-card h2 {
-  font-size: 16px;
+  font-size: 19px;
   margin-bottom: 12px;
 }
 
