@@ -258,7 +258,10 @@ function renderGamesList() {
 
   // Live overall summary — simple ticker, not a podium, so it doesn't read
   // like it's the point of the app.
-  list.insertAdjacentHTML("beforeend", tickerHtmlFromCounts("Most Drinks Overall", totalDrinksByRoom()));
+  list.insertAdjacentHTML(
+    "beforeend",
+    tickerHtmlFromCounts("Most Drinks Overall", totalDrinksByRoom(), { badge: true })
+  );
 
   GAMES.forEach((game) => {
     const card = document.createElement("div");
@@ -500,19 +503,30 @@ function scoringUnits() {
 const RANK_HEIGHT = { 1: 84, 2: 56, 3: 36 };
 const RANK_LABEL = { 1: "1st", 2: "2nd", 3: "3rd" };
 
-function tickerHtmlFromCounts(title, countsByRoom) {
+function tickerHtmlFromCounts(title, countsByRoom, opts = {}) {
+  const { special = false, badge = false } = opts;
+  const maxN = Math.max(...Object.values(countsByRoom));
+  const leaders = Object.values(ROOMS).filter(
+    (r) => (countsByRoom[r.id] || 0) === maxN && maxN > 0
+  );
+  const soleLeaderId = leaders.length === 1 ? leaders[0].id : null;
+
   const items = Object.values(ROOMS)
-    .map(
-      (r) => `
+    .map((r) => {
+      const n = countsByRoom[r.id] || 0;
+      const isLeader = special && soleLeaderId === r.id;
+      return `
       <div class="ticker-item">
         <div class="ticker-room" style="color:${r.color}">${r.label}</div>
-        <div class="ticker-num" style="color:${r.color}">${countsByRoom[r.id] || 0}</div>
-      </div>`
-    )
+        ${isLeader ? '<div class="ticker-crown">👑</div>' : ""}
+        <div class="ticker-num ${isLeader ? "ticker-num-leader" : ""}" style="color:${r.color}">${n}</div>
+      </div>`;
+    })
     .join("");
   return `
-    <div class="ticker-box">
+    <div class="ticker-box ${special ? "ticker-box-special" : ""}">
       <div class="ticker-title">${title}</div>
+      ${badge ? '<div class="token-badge">One Wayne Token Available</div>' : ""}
       <div class="ticker-row">${items}</div>
     </div>`;
 }
@@ -592,11 +606,12 @@ function renderLeaderboard() {
   const boxes = document.getElementById("lb-boxes");
   boxes.innerHTML = "";
 
-  // Live tally of Wayne Tokens each room currently holds — not itself a
-  // scoring unit, so no "One Wayne Token Available" badge here.
+  // Live tally of Wayne Tokens each room currently holds — flat numbers,
+  // not a podium, since this is a running tally rather than a single
+  // 1-token category.
   boxes.insertAdjacentHTML(
     "beforeend",
-    podiumHtmlFromCounts("Wayne Token Tracker", tokensByRoom(), false)
+    tickerHtmlFromCounts("Wayne Token Tracker", tokensByRoom(), { special: true })
   );
 
   // A real 10th point: whichever room has the most drinks logged across
