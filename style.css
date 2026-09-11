@@ -546,12 +546,13 @@ svg.topbar-logo {
 .slot-window {
   position: relative;
   width: 100%;
-  max-width: 220px;
-  height: 56px;
+  max-width: 260px;
+  height: 58px;
   overflow: hidden;
   border-radius: 10px;
   background: var(--bg);
   border: 2px solid var(--border);
+  margin: 0 auto;
 }
 
 .slot-highlight {
@@ -565,21 +566,50 @@ svg.topbar-logo {
 
 .slot-strip {
   display: flex;
-  height: 100%;
+  flex-direction: column;
+  width: 100%;
   will-change: transform;
 }
 
 .slot-item {
   flex-shrink: 0;
-  height: 100%;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: "Oswald", sans-serif;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   text-align: center;
-  padding: 0 6px;
+  padding: 0 8px;
+}
+
+.slot-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.slot-actions .confirm-shot,
+.slot-actions .respin-btn {
+  flex: 1;
+  min-height: var(--tap-min);
+  border-radius: 10px;
+  font-family: "Oswald", sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.slot-actions .confirm-shot {
+  background: var(--team-color);
+  color: #0b0e14;
+  border: none;
+}
+
+.slot-actions .respin-btn {
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--text-muted);
 }
 
 .wheel-result {
@@ -624,18 +654,6 @@ svg.topbar-logo {
 
 .spin-btn:disabled {
   opacity: 0.5;
-}
-
-.confirm-shot {
-  width: 100%;
-  min-height: var(--tap-min);
-  border-radius: 10px;
-  background: transparent;
-  border: 2px solid var(--team-color);
-  color: var(--text);
-  font-family: "Oswald", sans-serif;
-  font-size: 15px;
-  font-weight: 600;
 }
 
 /* ---------------- Leaderboard ---------------- */

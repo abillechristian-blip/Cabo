@@ -20,6 +20,7 @@ const STORAGE_KEY = "wayneGangUser";
 let allLogs = []; // live cache of every doc in `logs`, kept in sync via onSnapshot
 let lockedGames = {}; // { [gameId]: true } for games the admin has locked
 let shotSpins = {}; // { [roomId]: lastSpinTimestampMs } for the Shot Roulette cooldown
+let spinSessions = {}; // { [gameId]: { respinsUsed, locked } } — tracks the free-then-costly respin flow for the current unlogged result
 let pendingSpinGameIds = new Set(); // games with an in-flight spin animation/unconfirmed result — re-renders skip these so a concurrent log elsewhere doesn't wipe the animation
 let currentUser = null; // { room }
 let logoSvgText = null;
@@ -344,7 +345,10 @@ function renderGamesList() {
               ? `<div class="cooldown-note">🔒 Respin available in ${Math.ceil(remainingMs / 60000)} min</div>`
               : `<button class="spin-btn" id="spin-btn-${game.id}">Spin</button>`
           }
-          <button class="confirm-shot hidden" id="confirm-btn-${game.id}">Log This Shot</button>
+          <div class="slot-actions hidden" id="slot-actions-${game.id}">
+            <button class="confirm-shot" id="confirm-btn-${game.id}">Log This Shot</button>
+            <button class="respin-btn" id="respin-btn-${game.id}">Respin</button>
+          </div>
           <div class="wheel-note">Whatever it lands on, you drink.</div>
         </div>
         <div class="other-rooms">${otherRoomsHtml(game.id, null)}</div>
@@ -352,12 +356,15 @@ function renderGamesList() {
       buildSlotStrip(game, card.querySelector(`#slot-strip-${game.id}`));
 
       const spinBtn = card.querySelector(`#spin-btn-${game.id}`);
-      if (spinBtn) spinBtn.addEventListener("click", () => trySpin(game));
+      if (spinBtn) spinBtn.addEventListener("click", () => handleFirstSpin(game));
 
       card.querySelector(`#confirm-btn-${game.id}`).addEventListener("click", (e) => {
         pendingSpinGameIds.delete(game.id);
+        delete spinSessions[game.id];
         logDrink(game.id, null, e.currentTarget);
       });
+
+      card.querySelector(`#respin-btn-${game.id}`).addEventListener("click", () => handleRespin(game));
     }
 
     list.appendChild(card);
@@ -390,71 +397,84 @@ function otherRoomsHtml(gameId, subGameId) {
 // Shot Roulette slot machine
 // ---------------------------------------------------------------
 
-const SLOT_ITEM_WIDTH = 150;
+const SLOT_ITEM_HEIGHT = 58;
 const SLOT_REPEATS = 14;
 
 function buildSlotStrip(game, container) {
   let html = "";
   for (let r = 0; r < SLOT_REPEATS; r++) {
     game.segments.forEach((label) => {
-      html += `<div class="slot-item" style="width:${SLOT_ITEM_WIDTH}px;">${label}</div>`;
+      html += `<div class="slot-item" style="height:${SLOT_ITEM_HEIGHT}px;">${label}</div>`;
     });
   }
   container.innerHTML = html;
   container.style.transition = "none";
-  container.style.transform = "translateX(0px)";
+  container.style.transform = "translateY(0px)";
 }
 
-function trySpin(game) {
-  const roomId = currentUser.room;
-  const hasSpunBefore = !!shotSpins[roomId];
-
-  const proceed = () => runSpin(game);
-
-  if (hasSpunBefore) {
-    const ok = confirm(
-      `Spinning again locks ${ROOMS[roomId].label} out of Shot Roulette for ${RESPIN_COOLDOWN_MINUTES} minutes. Continue?`
-    );
-    if (!ok) return;
-  }
-  proceed();
-}
-
-async function runSpin(game) {
-  pendingSpinGameIds.add(game.id);
-
+function runSpinAnimation(game) {
   const stripEl = document.getElementById(`slot-strip-${game.id}`);
-  const windowEl = document.getElementById(`slot-window-${game.id}`);
-  const spinBtn = document.getElementById(`spin-btn-${game.id}`);
-  const resultEl = document.getElementById(`wheel-result-${game.id}`);
-  const confirmBtn = document.getElementById(`confirm-btn-${game.id}`);
-
-  if (spinBtn) spinBtn.disabled = true;
-  resultEl.textContent = "";
-  confirmBtn.classList.add("hidden");
-
   const n = game.segments.length;
   const winnerIndex = Math.floor(Math.random() * n);
   const targetRepeat = SLOT_REPEATS - 2;
   const targetFlatIndex = targetRepeat * n + winnerIndex;
-  const windowWidth = windowEl.clientWidth;
-  const finalX = -(targetFlatIndex * SLOT_ITEM_WIDTH) + (windowWidth / 2 - SLOT_ITEM_WIDTH / 2);
+  const finalY = -(targetFlatIndex * SLOT_ITEM_HEIGHT);
 
   stripEl.style.transition = "none";
-  stripEl.style.transform = "translateX(0px)";
+  stripEl.style.transform = "translateY(0px)";
   void stripEl.offsetWidth; // force reflow so the reset applies before animating
-  stripEl.style.transition = "transform 3.6s cubic-bezier(0.1,0.7,0.15,1)";
-  stripEl.style.transform = `translateX(${finalX}px)`;
+  stripEl.style.transition = "transform 3.2s cubic-bezier(0.1,0.7,0.15,1)";
+  stripEl.style.transform = `translateY(${finalY}px)`;
 
-  setTimeout(async () => {
-    resultEl.textContent = `You got: ${game.segments[winnerIndex]}`;
-    confirmBtn.classList.remove("hidden");
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(game.segments[winnerIndex]), 3300);
+  });
+}
+
+async function handleFirstSpin(game) {
+  pendingSpinGameIds.add(game.id);
+  const spinBtn = document.getElementById(`spin-btn-${game.id}`);
+  if (spinBtn) spinBtn.classList.add("hidden");
+
+  const winner = await runSpinAnimation(game);
+  document.getElementById(`wheel-result-${game.id}`).textContent = `You got: ${winner}`;
+  spinSessions[game.id] = { respinsUsed: 0, locked: false };
+  showSlotActions(game);
+}
+
+async function handleRespin(game) {
+  const session = spinSessions[game.id] || { respinsUsed: 0, locked: false };
+
+  if (session.respinsUsed >= 1) {
+    // This is the costly respin — warn before it happens, not after.
+    const ok = confirm(
+      `Respinning again locks ${ROOMS[currentUser.room].label} out of Shot Roulette for ${RESPIN_COOLDOWN_MINUTES} minutes. Continue?`
+    );
+    if (!ok) return;
+    session.locked = true;
     try {
       await setDoc(SHOT_SPINS_DOC, { [currentUser.room]: Date.now() }, { merge: true });
     } catch (e) {
       console.error("Failed to record spin cooldown", e);
     }
-  }, 3700);
+  }
+
+  document.getElementById(`slot-actions-${game.id}`).classList.add("hidden");
+  const winner = await runSpinAnimation(game);
+  document.getElementById(`wheel-result-${game.id}`).textContent = `You got: ${winner}`;
+  session.respinsUsed += 1;
+  spinSessions[game.id] = session;
+  showSlotActions(game);
+}
+
+function showSlotActions(game) {
+  const actionsEl = document.getElementById(`slot-actions-${game.id}`);
+  const respinBtn = document.getElementById(`respin-btn-${game.id}`);
+  const session = spinSessions[game.id] || { respinsUsed: 0, locked: false };
+
+  actionsEl.classList.remove("hidden");
+  respinBtn.classList.toggle("hidden", session.locked === true);
+  respinBtn.textContent = session.respinsUsed >= 1 ? "⚠️ Respin (15 min cooldown)" : "Respin";
 }
 
 // ---------------------------------------------------------------
