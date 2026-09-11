@@ -10,14 +10,17 @@ import {
   query,
   orderBy,
 } from "./firebase.js";
-import { ROOMS, GAMES, ADMIN_PIN, HYPE_MESSAGES } from "./data.js";
+import { ROOMS, GAMES, ADMIN_PIN, HYPE_MESSAGES, RESPIN_COOLDOWN_MINUTES } from "./data.js";
 
 const LOGS_COL = collection(db, "logs");
 const LOCKS_DOC = doc(db, "meta", "locks");
+const SHOT_SPINS_DOC = doc(db, "meta", "shotSpins");
 const STORAGE_KEY = "wayneGangUser";
 
 let allLogs = []; // live cache of every doc in `logs`, kept in sync via onSnapshot
 let lockedGames = {}; // { [gameId]: true } for games the admin has locked
+let shotSpins = {}; // { [roomId]: lastSpinTimestampMs } for the Shot Roulette cooldown
+let pendingSpinGameIds = new Set(); // games with an in-flight spin animation/unconfirmed result — re-renders skip these so a concurrent log elsewhere doesn't wipe the animation
 let currentUser = null; // { room }
 let logoSvgText = null;
 let currentPin = "";
@@ -48,8 +51,10 @@ async function boot() {
 
   listenToLogs();
   listenToLocks();
+  listenToShotSpins();
   setupNav();
   setupAdmin();
+  setInterval(safeRenderGamesList, 15000); // keeps the respin countdown display fresh
 }
 
 function renderLogoInto(el, className) {
@@ -116,14 +121,18 @@ function startMainApp() {
 // Firestore sync
 // ---------------------------------------------------------------
 
+function safeRenderGamesList() {
+  if (currentUser && pendingSpinGameIds.size === 0) renderGamesList();
+}
+
 function listenToLogs() {
   const q = query(LOGS_COL, orderBy("timestamp", "desc"));
   onSnapshot(
     q,
     (snap) => {
       allLogs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      safeRenderGamesList();
       if (currentUser) {
-        renderGamesList();
         renderLeaderboard();
         renderAuditList();
       }
@@ -139,10 +148,21 @@ function listenToLocks() {
     LOCKS_DOC,
     (snap) => {
       lockedGames = snap.exists() ? snap.data() : {};
-      if (currentUser) renderGamesList();
+      safeRenderGamesList();
       renderLockStatus();
     },
     (err) => console.error("Lock snapshot error", err)
+  );
+}
+
+function listenToShotSpins() {
+  onSnapshot(
+    SHOT_SPINS_DOC,
+    (snap) => {
+      shotSpins = snap.exists() ? snap.data() : {};
+      safeRenderGamesList();
+    },
+    (err) => console.error("Shot spin snapshot error", err)
   );
 }
 
@@ -245,6 +265,7 @@ function renderGamesList() {
     if (lockedGames[game.id]) {
       card.classList.add("locked");
       card.innerHTML = `
+        <div class="point-badge">${game.type === "multi" ? "5 Points" : "1 Point"}</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         <div class="locked-note">🔒 Locked right now — check back soon.</div>
@@ -255,6 +276,7 @@ function renderGamesList() {
 
     if (game.type === "simple") {
       card.innerHTML = `
+        <div class="point-badge">1 Point</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         ${yourScoreHtml(game.id, null)}
@@ -266,6 +288,7 @@ function renderGamesList() {
       );
     } else if (game.type === "multi") {
       card.innerHTML = `
+        <div class="point-badge">5 Points</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         <div class="bar-list">
@@ -299,32 +322,41 @@ function renderGamesList() {
         );
       });
     } else if (game.type === "wheel") {
+      const roomId = currentUser.room;
+      const lastSpin = shotSpins[roomId];
+      const cooldownMs = RESPIN_COOLDOWN_MINUTES * 60 * 1000;
+      const remainingMs = lastSpin ? cooldownMs - (Date.now() - lastSpin) : 0;
+      const onCooldown = remainingMs > 0;
+
       card.innerHTML = `
+        <div class="point-badge">1 Point</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         ${yourScoreHtml(game.id, null)}
-        <div class="wheel-wrap">
-          <div class="wheel-outer">
-            <div class="wheel-pointer"></div>
-            <div class="wheel" id="wheel-${game.id}"></div>
+        <div class="slot-wrap">
+          <div class="slot-window" id="slot-window-${game.id}">
+            <div class="slot-highlight"></div>
+            <div class="slot-strip" id="slot-strip-${game.id}"></div>
           </div>
           <div class="wheel-result" id="wheel-result-${game.id}"></div>
-          <button class="spin-btn" id="spin-btn-${game.id}">Spin the Wheel</button>
+          ${
+            onCooldown
+              ? `<div class="cooldown-note">🔒 Respin available in ${Math.ceil(remainingMs / 60000)} min</div>`
+              : `<button class="spin-btn" id="spin-btn-${game.id}">Spin</button>`
+          }
           <button class="confirm-shot hidden" id="confirm-btn-${game.id}">Log This Shot</button>
-          <div class="wheel-note">Binding — whatever it lands on, you drink. No respins.</div>
+          <div class="wheel-note">Whatever it lands on, you drink.</div>
         </div>
         <div class="other-rooms">${otherRoomsHtml(game.id, null)}</div>
       `;
-      buildWheel(game, card.querySelector(`#wheel-${game.id}`));
-      card.querySelector(`#spin-btn-${game.id}`).addEventListener("click", () =>
-        spinWheel(game)
-      );
+      buildSlotStrip(game, card.querySelector(`#slot-strip-${game.id}`));
+
+      const spinBtn = card.querySelector(`#spin-btn-${game.id}`);
+      if (spinBtn) spinBtn.addEventListener("click", () => trySpin(game));
+
       card.querySelector(`#confirm-btn-${game.id}`).addEventListener("click", (e) => {
+        pendingSpinGameIds.delete(game.id);
         logDrink(game.id, null, e.currentTarget);
-        e.currentTarget.classList.add("hidden");
-        document.getElementById(`spin-btn-${game.id}`).classList.remove("hidden");
-        document.getElementById(`spin-btn-${game.id}`).disabled = false;
-        document.getElementById(`wheel-result-${game.id}`).textContent = "";
       });
     }
 
@@ -355,69 +387,74 @@ function otherRoomsHtml(gameId, subGameId) {
 }
 
 // ---------------------------------------------------------------
-// Shot Roulette wheel
+// Shot Roulette slot machine
 // ---------------------------------------------------------------
 
-function polar(cx, cy, r, angleDeg) {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
+const SLOT_ITEM_WIDTH = 150;
+const SLOT_REPEATS = 14;
+
+function buildSlotStrip(game, container) {
+  let html = "";
+  for (let r = 0; r < SLOT_REPEATS; r++) {
+    game.segments.forEach((label) => {
+      html += `<div class="slot-item" style="width:${SLOT_ITEM_WIDTH}px;">${label}</div>`;
+    });
+  }
+  container.innerHTML = html;
+  container.style.transition = "none";
+  container.style.transform = "translateX(0px)";
 }
 
-function buildWheel(game, container) {
-  const segments = game.segments;
-  const n = segments.length;
-  const per = 360 / n;
-  const cx = 110,
-    cy = 110,
-    r = 105;
-  const colors = ["#1c2330", "#262d3a"];
+function trySpin(game) {
+  const roomId = currentUser.room;
+  const hasSpunBefore = !!shotSpins[roomId];
 
-  let svg = `<svg viewBox="0 0 220 220" width="100%" height="100%">`;
-  segments.forEach((label, i) => {
-    const start = i * per;
-    const end = start + per;
-    const p1 = polar(cx, cy, r, start);
-    const p2 = polar(cx, cy, r, end);
-    const largeArc = per > 180 ? 1 : 0;
-    const mid = start + per / 2;
-    const textPos = polar(cx, cy, r * 0.62, mid);
-    svg += `<path d="M ${cx} ${cy} L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 ${largeArc} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z" fill="${colors[i % 2]}" stroke="#0b0e14" stroke-width="1"/>`;
-    svg += `<text x="${textPos.x.toFixed(2)}" y="${textPos.y.toFixed(2)}" fill="#f5f7fa" font-size="12" font-family="Inter, sans-serif" font-weight="600" text-anchor="middle" dominant-baseline="middle" transform="rotate(${mid.toFixed(2)} ${textPos.x.toFixed(2)} ${textPos.y.toFixed(2)})">${label}</text>`;
-  });
-  svg += `</svg>`;
-  container.innerHTML = svg;
-  container.dataset.rotation = "0";
+  const proceed = () => runSpin(game);
+
+  if (hasSpunBefore) {
+    const ok = confirm(
+      `Spinning again locks ${ROOMS[roomId].label} out of Shot Roulette for ${RESPIN_COOLDOWN_MINUTES} minutes. Continue?`
+    );
+    if (!ok) return;
+  }
+  proceed();
 }
 
-function spinWheel(game) {
-  const wheelEl = document.getElementById(`wheel-${game.id}`);
+async function runSpin(game) {
+  pendingSpinGameIds.add(game.id);
+
+  const stripEl = document.getElementById(`slot-strip-${game.id}`);
+  const windowEl = document.getElementById(`slot-window-${game.id}`);
   const spinBtn = document.getElementById(`spin-btn-${game.id}`);
   const resultEl = document.getElementById(`wheel-result-${game.id}`);
   const confirmBtn = document.getElementById(`confirm-btn-${game.id}`);
 
-  spinBtn.disabled = true;
+  if (spinBtn) spinBtn.disabled = true;
   resultEl.textContent = "";
   confirmBtn.classList.add("hidden");
 
   const n = game.segments.length;
-  const per = 360 / n;
   const winnerIndex = Math.floor(Math.random() * n);
-  const midOfWinner = winnerIndex * per + per / 2;
-  const spins = 5;
-  const targetRotation = spins * 360 + (360 - midOfWinner);
+  const targetRepeat = SLOT_REPEATS - 2;
+  const targetFlatIndex = targetRepeat * n + winnerIndex;
+  const windowWidth = windowEl.clientWidth;
+  const finalX = -(targetFlatIndex * SLOT_ITEM_WIDTH) + (windowWidth / 2 - SLOT_ITEM_WIDTH / 2);
 
-  wheelEl.style.transition = "none";
-  wheelEl.style.transform = "rotate(0deg)";
-  // force reflow so the reset actually applies before animating again
-  void wheelEl.offsetWidth;
-  wheelEl.style.transition = "transform 4s cubic-bezier(0.15,0.85,0.25,1)";
-  wheelEl.style.transform = `rotate(${targetRotation}deg)`;
+  stripEl.style.transition = "none";
+  stripEl.style.transform = "translateX(0px)";
+  void stripEl.offsetWidth; // force reflow so the reset applies before animating
+  stripEl.style.transition = "transform 3.6s cubic-bezier(0.1,0.7,0.15,1)";
+  stripEl.style.transform = `translateX(${finalX}px)`;
 
-  setTimeout(() => {
-    resultEl.textContent = game.segments[winnerIndex];
-    spinBtn.classList.add("hidden");
+  setTimeout(async () => {
+    resultEl.textContent = `You got: ${game.segments[winnerIndex]}`;
     confirmBtn.classList.remove("hidden");
-  }, 4100);
+    try {
+      await setDoc(SHOT_SPINS_DOC, { [currentUser.room]: Date.now() }, { merge: true });
+    } catch (e) {
+      console.error("Failed to record spin cooldown", e);
+    }
+  }, 3700);
 }
 
 // ---------------------------------------------------------------

@@ -51,6 +51,7 @@ export const GAMES = [
 ];
 
 export const ADMIN_PIN = "4210";
+export const RESPIN_COOLDOWN_MINUTES = 15;
 
 export const HYPE_MESSAGES = [
   "Keep drinking!",
