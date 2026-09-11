@@ -191,7 +191,7 @@ svg.login-logo {
 }
 
 svg.topbar-logo {
-  width: 100px;
+  width: 140px;
   height: auto;
   display: block;
 }
@@ -208,7 +208,7 @@ svg.topbar-logo {
 }
 
 .logo-fallback.topbar-logo {
-  font-size: 26px;
+  font-size: 36px;
 }
 
 .field-block {

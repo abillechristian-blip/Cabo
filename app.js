@@ -567,7 +567,7 @@ function setupNav() {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      ["games", "leaderboard", "info"].forEach((s) => {
+      ["games", "leaderboard", "rules", "info"].forEach((s) => {
         document.getElementById(`screen-${s}`).classList.toggle("hidden", s !== btn.dataset.screen);
       });
       if (btn.dataset.screen === "leaderboard") renderLeaderboard();

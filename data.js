@@ -2,8 +2,8 @@
 
 export const ROOMS = {
   1: { id: 1, label: "Room One", color: "#FFCD00", members: ["Christian", "Jerome", "JR"] },
-  2: { id: 2, label: "Room Two", color: "#2F6FED", members: ["John", "Jules"] },
-  3: { id: 3, label: "Room Three", color: "#E5383B", members: [] },
+  2: { id: 2, label: "Room Two", color: "#2F6FED", members: ["Jules", "Wes", "John"] },
+  3: { id: 3, label: "Room Three", color: "#E5383B", members: ["Gabe", "Kevin", "BJ"] },
 };
 
 // "simple" = one big log button
