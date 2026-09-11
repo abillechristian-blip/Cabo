@@ -457,12 +457,11 @@ function podiumHtml(gameId, subGameId, gameName) {
     rank: 1 + raw.filter((o) => o.n > c.n).length,
   }));
 
-  const byRank = [...withRank].sort((a, b) => a.rank - b.rank || a.room.id - b.room.id);
-
-  // Classic centered-1st layout only makes sense with no ties; otherwise just
-  // go left-to-right by rank so nothing overlaps oddly.
-  const noTies = byRank[0].rank === 1 && byRank[1].rank === 2 && byRank[2].rank === 3;
-  const order = noTies ? [byRank[1], byRank[0], byRank[2]] : byRank;
+  // Sort by count descending (stable tie-break by room id), then always
+  // place the top count in the center — left/right stay 2nd/3rd by position
+  // no matter how the tie values line up.
+  const sorted = [...withRank].sort((a, b) => b.n - a.n || a.room.id - b.room.id);
+  const order = [sorted[1], sorted[0], sorted[2]];
 
   const slots = order
     .map((item) => {
