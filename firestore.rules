@@ -10,6 +10,12 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Stores which games are currently locked by the admin (e.g. Boat Party
+    // outside the actual boat outing).
+    match /meta/{docId} {
+      allow read, write: if true;
+    }
+
     // Everything else stays locked down.
     match /{document=**} {
       allow read, write: if false;

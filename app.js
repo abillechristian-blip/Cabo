@@ -4,6 +4,7 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  setDoc,
   onSnapshot,
   serverTimestamp,
   query,
@@ -12,9 +13,11 @@ import {
 import { ROOMS, GAMES, ADMIN_PIN, HYPE_MESSAGES } from "./data.js";
 
 const LOGS_COL = collection(db, "logs");
+const LOCKS_DOC = doc(db, "meta", "locks");
 const STORAGE_KEY = "wayneGangUser";
 
 let allLogs = []; // live cache of every doc in `logs`, kept in sync via onSnapshot
+let lockedGames = {}; // { [gameId]: true } for games the admin has locked
 let currentUser = null; // { room }
 let logoSvgText = null;
 let currentPin = "";
@@ -44,6 +47,7 @@ async function boot() {
   }
 
   listenToLogs();
+  listenToLocks();
   setupNav();
   setupAdmin();
 }
@@ -127,6 +131,18 @@ function listenToLogs() {
     (err) => {
       console.error("Snapshot error", err);
     }
+  );
+}
+
+function listenToLocks() {
+  onSnapshot(
+    LOCKS_DOC,
+    (snap) => {
+      lockedGames = snap.exists() ? snap.data() : {};
+      if (currentUser) renderGamesList();
+      renderLockStatus();
+    },
+    (err) => console.error("Lock snapshot error", err)
   );
 }
 
@@ -220,6 +236,17 @@ function renderGamesList() {
   GAMES.forEach((game) => {
     const card = document.createElement("div");
     card.className = "game-card";
+
+    if (lockedGames[game.id]) {
+      card.classList.add("locked");
+      card.innerHTML = `
+        <div class="game-head"><h2>${game.name}</h2></div>
+        <div class="subtitle">${game.subtitle}</div>
+        <div class="locked-note">🔒 Locked right now — check back soon.</div>
+      `;
+      list.appendChild(card);
+      return;
+    }
 
     if (game.type === "simple") {
       card.innerHTML = `
@@ -580,8 +607,28 @@ function setupAdmin() {
   const resetSel = document.getElementById("reset-game");
   resetSel.innerHTML = GAMES.map((g) => `<option value="${g.id}">${g.name}</option>`).join("");
 
+  const lockSel = document.getElementById("lock-game-select");
+  lockSel.innerHTML = GAMES.map((g) => `<option value="${g.id}">${g.name}</option>`).join("");
+  document.getElementById("lock-btn").addEventListener("click", () =>
+    setGameLock(lockSel.value, true)
+  );
+  document.getElementById("unlock-btn").addEventListener("click", () =>
+    setGameLock(lockSel.value, false)
+  );
+
   document.getElementById("adj-submit").addEventListener("click", submitAdjustment);
   document.getElementById("reset-submit").addEventListener("click", submitReset);
+}
+
+async function setGameLock(gameId, locked) {
+  await setDoc(LOCKS_DOC, { [gameId]: locked }, { merge: true });
+}
+
+function renderLockStatus() {
+  const el = document.getElementById("lock-status");
+  if (!el) return;
+  const locked = GAMES.filter((g) => lockedGames[g.id]).map((g) => g.name);
+  el.textContent = locked.length ? `Currently locked: ${locked.join(", ")}` : "Nothing is locked right now.";
 }
 
 function updateAdjSubgameVisibility() {
