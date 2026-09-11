@@ -206,7 +206,7 @@ function renderGamesList() {
                 .filter((r) => r.id !== room.id)
                 .map(
                   (r) =>
-                    `<span class="rn" style="color:${r.color}">${r.label}</span><span class="rv">${countFor(game.id, sg.id, r.id)}</span>`
+                    `<div class="other-room"><span class="rn" style="color:${r.color}">${r.label}</span><span class="rv">${countFor(game.id, sg.id, r.id)}</span></div>`
                 )
                 .join("");
               return `
@@ -267,7 +267,6 @@ function yourScoreHtml(gameId, subGameId) {
   return `
     <div class="your-score">
       <div class="your-score-num" style="color:${room.color}">${n}</div>
-      <div class="your-score-label">${room.label} — You</div>
     </div>`;
 }
 

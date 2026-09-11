@@ -1,9 +1,9 @@
 // Wayne Gang — static data: rooms, games, shot roulette segments
 
 export const ROOMS = {
-  1: { id: 1, label: "Room 1", color: "#FFCD00", members: ["Christian", "Jerome", "JR"] },
-  2: { id: 2, label: "Room 2", color: "#2F6FED", members: ["John", "Jules"] },
-  3: { id: 3, label: "Room 3", color: "#E5383B", members: [] },
+  1: { id: 1, label: "Room One", color: "#FFCD00", members: ["Christian", "Jerome", "JR"] },
+  2: { id: 2, label: "Room Two", color: "#2F6FED", members: ["John", "Jules"] },
+  3: { id: 3, label: "Room Three", color: "#E5383B", members: [] },
 };
 
 // "simple" = one big log button
