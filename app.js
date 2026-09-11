@@ -490,6 +490,7 @@ function podiumHtmlFromCounts(title, countsByRoom) {
 
   return `
     <div class="podium-box">
+      <div class="point-badge">1 Point</div>
       <div class="podium-title">${title}</div>
       <div class="podium-row">${slots}</div>
     </div>`;
