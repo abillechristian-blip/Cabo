@@ -26,7 +26,7 @@ let wheelResultsByGame = {}; // gameId -> pending shot result awaiting log
 
 async function boot() {
   try {
-    const res = await fetch("assets/wayne-gang-logo.svg");
+    const res = await fetch("wayne-gang-logo.svg");
     if (!res.ok) throw new Error(`Logo fetch failed: ${res.status}`);
     logoSvgText = await res.text();
   } catch (e) {
