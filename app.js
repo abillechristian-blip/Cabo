@@ -267,8 +267,8 @@ function renderGamesList() {
     if (lockedGames[game.id]) {
       card.classList.add("locked");
       card.innerHTML = `
-        <div class="point-badge">${game.type === "multi" ? "5 Wayne Tokens" : "1 Wayne Token"}</div>
         <div class="game-head"><h2>${game.name}</h2></div>
+        ${game.type === "multi" ? "" : '<div class="token-badge">One Wayne Token Available</div>'}
         <div class="subtitle">${game.subtitle}</div>
         <div class="locked-note">🔒 Locked right now — check back soon.</div>
       `;
@@ -278,8 +278,8 @@ function renderGamesList() {
 
     if (game.type === "simple") {
       card.innerHTML = `
-        <div class="point-badge">1 Wayne Token</div>
         <div class="game-head"><h2>${game.name}</h2></div>
+        <div class="token-badge">One Wayne Token Available</div>
         <div class="subtitle">${game.subtitle}</div>
         ${yourScoreHtml(game.id, null)}
         <button class="log-btn" data-game="${game.id}">Log a Drink</button>
@@ -290,7 +290,6 @@ function renderGamesList() {
       );
     } else if (game.type === "multi") {
       card.innerHTML = `
-        <div class="point-badge">5 Wayne Tokens</div>
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
         <div class="bar-list">
@@ -308,7 +307,10 @@ function renderGamesList() {
               return `
               <div class="bar-row">
                 <div class="bar-row-head">
-                  <div class="bar-name">${sg.name}</div>
+                  <div class="bar-name-block">
+                    <div class="bar-name">${sg.name}</div>
+                    <div class="bar-token-note">One Wayne Token Available</div>
+                  </div>
                   <div class="bar-your-score" style="color:${room.color}">${yourCount}</div>
                 </div>
                 <button class="bar-log-btn" data-game="${game.id}" data-sub="${sg.id}">+1 Drink</button>
@@ -331,8 +333,8 @@ function renderGamesList() {
       const onCooldown = remainingMs > 0;
 
       card.innerHTML = `
-        <div class="point-badge">1 Wayne Token</div>
         <div class="game-head"><h2>${game.name}</h2></div>
+        <div class="token-badge">One Wayne Token Available</div>
         <div class="subtitle">${game.subtitle}</div>
         ${yourScoreHtml(game.id, null)}
         <div class="slot-wrap">
@@ -378,7 +380,6 @@ function yourScoreHtml(gameId, subGameId) {
   return `
     <div class="your-score">
       <div class="your-score-num" style="color:${room.color}">${n}</div>
-      <div class="your-score-label">Points</div>
     </div>`;
 }
 
@@ -506,7 +507,6 @@ function tickerHtmlFromCounts(title, countsByRoom) {
       <div class="ticker-item">
         <div class="ticker-room" style="color:${r.color}">${r.label}</div>
         <div class="ticker-num" style="color:${r.color}">${countsByRoom[r.id] || 0}</div>
-        <div class="ticker-points-label">Points</div>
       </div>`
     )
     .join("");
@@ -517,7 +517,7 @@ function tickerHtmlFromCounts(title, countsByRoom) {
     </div>`;
 }
 
-function podiumHtmlFromCounts(title, countsByRoom) {
+function podiumHtmlFromCounts(title, countsByRoom, showBadge = true) {
   const raw = Object.values(ROOMS).map((r) => ({ room: r, n: countsByRoom[r.id] || 0 }));
   const maxN = Math.max(...raw.map((c) => c.n));
 
@@ -550,8 +550,8 @@ function podiumHtmlFromCounts(title, countsByRoom) {
 
   return `
     <div class="podium-box">
-      <div class="point-badge">1 Wayne Token</div>
       <div class="podium-title">${title}</div>
+      ${showBadge ? '<div class="token-badge">One Wayne Token Available</div>' : ""}
       <div class="podium-row">${slots}</div>
     </div>`;
 }
@@ -574,9 +574,30 @@ function totalDrinksByRoom() {
   return totals;
 }
 
+function tokensByRoom() {
+  const tokens = { 1: 0, 2: 0, 3: 0 };
+  scoringUnits().forEach((u) => {
+    const counts = Object.values(ROOMS).map((r) => ({
+      room: r.id,
+      n: countFor(u.gameId, u.subGameId, r.id),
+    }));
+    const max = Math.max(...counts.map((c) => c.n));
+    const leaders = counts.filter((c) => c.n === max && max > 0);
+    if (leaders.length === 1) tokens[leaders[0].room]++;
+  });
+  return tokens;
+}
+
 function renderLeaderboard() {
   const boxes = document.getElementById("lb-boxes");
   boxes.innerHTML = "";
+
+  // Live tally of Wayne Tokens each room currently holds — not itself a
+  // scoring unit, so no "One Wayne Token Available" badge here.
+  boxes.insertAdjacentHTML(
+    "beforeend",
+    podiumHtmlFromCounts("Wayne Token Tracker", tokensByRoom(), false)
+  );
 
   // A real 10th point: whichever room has the most drinks logged across
   // everything combined wins this outright — shown first since it's the
