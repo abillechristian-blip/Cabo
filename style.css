@@ -71,16 +71,16 @@ input {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 90px;
-  transform: translateX(-50%) translateY(20px) scale(0.9);
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
   background: var(--team-color);
   color: #0b0e14;
   font-family: "Oswald", sans-serif;
   font-weight: 700;
-  font-size: 15px;
-  padding: 12px 22px;
-  border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  font-size: 22px;
+  padding: 20px 32px;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   opacity: 0;
   pointer-events: none;
   z-index: 50;
@@ -94,7 +94,7 @@ input {
 
 .toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0) scale(1);
+  transform: translate(-50%, -50%) scale(1);
   transition: opacity 0.15s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
