@@ -26,7 +26,14 @@ let wheelResultsByGame = {}; // gameId -> pending shot result awaiting log
 // ---------------------------------------------------------------
 
 async function boot() {
-  logoSvgText = await fetch("assets/wayne-gang-logo.svg").then((r) => r.text());
+  try {
+    const res = await fetch("assets/wayne-gang-logo.svg");
+    if (!res.ok) throw new Error(`Logo fetch failed: ${res.status}`);
+    logoSvgText = await res.text();
+  } catch (e) {
+    console.error(e);
+    logoSvgText = null; // renderLogoInto() falls back to text if this is null
+  }
   renderLogoInto(document.getElementById("login-logo-slot"), "login-logo");
 
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -44,6 +51,11 @@ async function boot() {
 
 function renderLogoInto(el, className) {
   if (!el) return;
+  if (!logoSvgText) {
+    // Logo file didn't load — fall back to plain text instead of breaking the layout.
+    el.innerHTML = `<div class="logo-fallback ${className || ""}">WAYNE GANG</div>`;
+    return;
+  }
   el.innerHTML = logoSvgText;
   const svg = el.querySelector("svg");
   if (svg) svg.classList.add(className || "");

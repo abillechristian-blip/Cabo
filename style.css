@@ -164,6 +164,21 @@ svg.topbar-logo {
   display: block;
 }
 
+.logo-fallback {
+  font-family: "Oswald", sans-serif;
+  font-weight: 600;
+  color: var(--team-color);
+  white-space: nowrap;
+}
+
+.logo-fallback.login-logo {
+  font-size: 24px;
+}
+
+.logo-fallback.topbar-logo {
+  font-size: 13px;
+}
+
 .login-screen h1 {
   font-size: 28px;
   margin-bottom: 4px;
