@@ -518,7 +518,6 @@ function tickerHtmlFromCounts(title, countsByRoom, opts = {}) {
       return `
       <div class="ticker-item">
         <div class="ticker-room" style="color:${r.color}">${r.label}</div>
-        ${isLeader ? '<div class="ticker-crown">👑</div>' : ""}
         <div class="ticker-num ${isLeader ? "ticker-num-leader" : ""}" style="color:${r.color}">${n}</div>
       </div>`;
     })
@@ -526,6 +525,7 @@ function tickerHtmlFromCounts(title, countsByRoom, opts = {}) {
   return `
     <div class="ticker-box ${special ? "ticker-box-special" : ""}">
       <div class="ticker-title">${title}</div>
+      ${special ? '<div class="ticker-subtitle">Whoever has the most Wayne Tokens when the weekend ends wins.</div>' : ""}
       ${badge ? '<div class="token-badge">One Wayne Token Available</div>' : ""}
       <div class="ticker-row">${items}</div>
     </div>`;
