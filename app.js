@@ -162,6 +162,7 @@ function listenToShotSpins() {
     (snap) => {
       shotSpins = snap.exists() ? snap.data() : {};
       safeRenderGamesList();
+      renderCooldownStatus();
     },
     (err) => console.error("Shot spin snapshot error", err)
   );
@@ -705,8 +706,37 @@ function setupAdmin() {
     setGameLock(lockSel.value, false)
   );
 
+  const cooldownRoomSel = document.getElementById("cooldown-room-select");
+  cooldownRoomSel.innerHTML = Object.values(ROOMS)
+    .map((r) => `<option value="${r.id}">${r.label}</option>`)
+    .join("");
+  document.getElementById("clear-cooldown-btn").addEventListener("click", () =>
+    clearShotCooldown(Number(cooldownRoomSel.value))
+  );
+
   document.getElementById("adj-submit").addEventListener("click", submitAdjustment);
   document.getElementById("reset-submit").addEventListener("click", submitReset);
+}
+
+async function clearShotCooldown(roomId) {
+  try {
+    await setDoc(SHOT_SPINS_DOC, { [roomId]: 0 }, { merge: true });
+  } catch (e) {
+    console.error("Failed to clear cooldown", e);
+  }
+}
+
+function renderCooldownStatus() {
+  const el = document.getElementById("cooldown-status");
+  if (!el) return;
+  const cooldownMs = RESPIN_COOLDOWN_MINUTES * 60 * 1000;
+  const onCooldown = Object.values(ROOMS).filter((r) => {
+    const last = shotSpins[r.id];
+    return last && cooldownMs - (Date.now() - last) > 0;
+  });
+  el.textContent = onCooldown.length
+    ? `On cooldown: ${onCooldown.map((r) => r.label).join(", ")}`
+    : "No rooms currently on cooldown.";
 }
 
 async function setGameLock(gameId, locked) {
