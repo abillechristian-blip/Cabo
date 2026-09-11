@@ -442,6 +442,51 @@ function leaderOf(gameId, subGameId) {
   return { leaders: leaders.map((l) => l.room), max, counts };
 }
 
+const RANK_HEIGHT = { 1: 84, 2: 56, 3: 36 };
+const RANK_LABEL = { 1: "1st", 2: "2nd", 3: "3rd" };
+
+function podiumHtml(gameId, subGameId, gameName) {
+  const raw = Object.values(ROOMS).map((r) => ({
+    room: r,
+    n: countFor(gameId, subGameId, r.id),
+  }));
+  const maxN = Math.max(...raw.map((c) => c.n));
+
+  const withRank = raw.map((c) => ({
+    ...c,
+    rank: 1 + raw.filter((o) => o.n > c.n).length,
+  }));
+
+  const byRank = [...withRank].sort((a, b) => a.rank - b.rank || a.room.id - b.room.id);
+
+  // Classic centered-1st layout only makes sense with no ties; otherwise just
+  // go left-to-right by rank so nothing overlaps oddly.
+  const noTies = byRank[0].rank === 1 && byRank[1].rank === 2 && byRank[2].rank === 3;
+  const order = noTies ? [byRank[1], byRank[0], byRank[2]] : byRank;
+
+  const slots = order
+    .map((item) => {
+      const isLeader = item.rank === 1 && maxN > 0;
+      const height = RANK_HEIGHT[item.rank] || 36;
+      const barColor = isLeader ? item.room.color : "var(--surface-raised)";
+      const barTextColor = isLeader ? "#0b0e14" : "var(--text-muted)";
+      return `
+        <div class="podium-slot">
+          <div class="podium-room" style="color:${item.room.color}">${item.room.label}</div>
+          <div class="podium-num">${item.n}</div>
+          ${isLeader ? '<div class="podium-crown">👑</div>' : '<div class="podium-crown-spacer"></div>'}
+          <div class="podium-bar" style="height:${height}px; background:${barColor}; color:${barTextColor};">${RANK_LABEL[item.rank] || ""}</div>
+        </div>`;
+    })
+    .join("");
+
+  return `
+    <div class="podium-box">
+      <div class="podium-title">${gameName}</div>
+      <div class="podium-row">${slots}</div>
+    </div>`;
+}
+
 function renderLeaderboard() {
   // Overall leader = room with the most "unit wins" (outright, non-tied leads)
   const wins = { 1: 0, 2: 0, 3: 0 };
@@ -472,30 +517,7 @@ function renderLeaderboard() {
   const boxes = document.getElementById("lb-boxes");
   boxes.innerHTML = "";
   scoringUnits().forEach((u) => {
-    const { leaders, counts } = leaderOf(u.gameId, u.subGameId);
-    const box = document.createElement("div");
-    let cls = "lb-box";
-    let style = "";
-    if (leaders.length === 1) {
-      cls += ` lead-${leaders[0]}`;
-    } else if (leaders.length === 2) {
-      cls += " split";
-      style = `--split-a:${ROOMS[leaders[0]].color}; --split-b:${ROOMS[leaders[1]].color};`;
-    } else if (leaders.length === 3) {
-      cls += " split";
-      style = `--split-a:${ROOMS[1].color}; --split-b:${ROOMS[2].color};`;
-    }
-    box.className = cls;
-    box.style = style;
-    box.innerHTML = `
-      <div class="lb-title">${u.name}</div>
-      ${counts
-        .map(
-          (c) => `<div class="lb-row"><span>${ROOMS[c.room].label}</span><span class="n">${c.n}</span></div>`
-        )
-        .join("")}
-    `;
-    boxes.appendChild(box);
+    boxes.insertAdjacentHTML("beforeend", podiumHtml(u.gameId, u.subGameId, u.name));
   });
 
   renderFeed();
