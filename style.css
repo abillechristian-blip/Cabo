@@ -89,10 +89,11 @@ input {
 /* ---------------- Top bar ---------------- */
 
 .topbar {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  padding: 16px 16px 14px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   position: sticky;
@@ -100,31 +101,32 @@ input {
   z-index: 5;
 }
 
+.topbar-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .topbar .logo {
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-.topbar .who {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.topbar .who .name {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.topbar .who .room {
-  font-size: 12.5px;
+.topbar .room {
+  font-size: 13px;
   color: var(--team-color);
   font-weight: 600;
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 0.03em;
 }
 
-.topbar .spacer {
-  flex: 1;
+.switch-corner {
+  position: absolute;
+  top: 14px;
+  right: 16px;
 }
 
 .icon-btn {
@@ -159,7 +161,7 @@ svg.login-logo {
 }
 
 svg.topbar-logo {
-  width: 40px;
+  width: 64px;
   height: auto;
   display: block;
 }
@@ -176,18 +178,7 @@ svg.topbar-logo {
 }
 
 .logo-fallback.topbar-logo {
-  font-size: 13px;
-}
-
-.login-screen h1 {
-  font-size: 28px;
-  margin-bottom: 4px;
-}
-
-.login-screen p {
-  color: var(--text-muted);
-  font-size: 14.5px;
-  margin: 0;
+  font-size: 19px;
 }
 
 .field-block {
@@ -320,41 +311,34 @@ svg.topbar-logo {
   margin-bottom: 14px;
 }
 
-.room-counts {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.room-count {
-  flex: 1;
-  background: var(--bg);
-  border-radius: 10px;
-  padding: 8px 6px;
+.your-score {
   text-align: center;
+  padding: 6px 0 16px;
 }
 
-.room-count .num {
+.your-score .your-score-num {
   font-family: "Oswald", sans-serif;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.room-count .label {
-  font-size: 10.5px;
+.your-score .your-score-label {
+  font-size: 12.5px;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
 }
 
 .log-btn {
   width: 100%;
-  min-height: var(--tap-min);
+  min-height: 48px;
   border-radius: 10px;
   background: var(--team-color);
   color: #0b0e14;
   font-family: "Oswald", sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -367,6 +351,33 @@ svg.topbar-logo {
   opacity: 0.6;
 }
 
+.other-rooms {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.other-room {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.other-room .rn {
+  font-weight: 600;
+}
+
+.other-room .rv {
+  font-family: "Oswald", sans-serif;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .log-fail {
   margin-top: 8px;
   font-size: 13px;
@@ -376,46 +387,70 @@ svg.topbar-logo {
 
 /* Multi (swim-up bar circuit) */
 
-.subgame-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.subgame-tile {
-  background: var(--bg);
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
-}
-
-.subgame-tile .name {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.subgame-tile .mini-counts {
+.bar-list {
   display: flex;
-  justify-content: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.subgame-tile .mini-counts span.lead {
+.bar-row {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.bar-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.bar-name {
+  font-family: "Oswald", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.bar-your-score {
+  font-family: "Oswald", sans-serif;
+  font-size: 28px;
   font-weight: 700;
 }
 
-.subgame-tile button {
+.bar-log-btn {
   width: 100%;
-  min-height: 44px;
-  border-radius: 8px;
+  min-height: 46px;
+  border-radius: 9px;
   background: var(--team-color);
   color: #0b0e14;
-  font-size: 13.5px;
+  font-family: "Oswald", sans-serif;
+  font-size: 14.5px;
   font-weight: 600;
+}
+
+.bar-log-btn:active {
+  transform: scale(0.98);
+}
+
+.bar-others {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.bar-others .rn {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.bar-others .rv {
+  font-family: "Oswald", sans-serif;
+  font-weight: 600;
+  color: var(--text);
 }
 
 /* Wheel */

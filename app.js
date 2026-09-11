@@ -186,8 +186,9 @@ function renderGamesList() {
       card.innerHTML = `
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
-        <div class="room-counts">${roomCountsHtml(game.id, null)}</div>
+        ${yourScoreHtml(game.id, null)}
         <button class="log-btn" data-game="${game.id}">Log a Drink</button>
+        <div class="other-rooms">${otherRoomsHtml(game.id, null)}</div>
       `;
       card.querySelector(".log-btn").addEventListener("click", (e) =>
         logDrink(game.id, null, e.currentTarget)
@@ -196,17 +197,26 @@ function renderGamesList() {
       card.innerHTML = `
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
-        <div class="subgame-grid">
+        <div class="bar-list">
           ${game.subGames
             .map((sg) => {
-              const counts = Object.values(ROOMS)
-                .map((r) => countFor(game.id, sg.id, r.id))
+              const room = ROOMS[currentUser.room];
+              const yourCount = countFor(game.id, sg.id, room.id);
+              const others = Object.values(ROOMS)
+                .filter((r) => r.id !== room.id)
+                .map(
+                  (r) =>
+                    `<span class="rn" style="color:${r.color}">${r.label}</span><span class="rv">${countFor(game.id, sg.id, r.id)}</span>`
+                )
                 .join("");
               return `
-              <div class="subgame-tile">
-                <div class="name">${sg.name}</div>
-                <div class="mini-counts">${miniCountsHtml(game.id, sg.id)}</div>
-                <button data-game="${game.id}" data-sub="${sg.id}">+1</button>
+              <div class="bar-row">
+                <div class="bar-row-head">
+                  <div class="bar-name">${sg.name}</div>
+                  <div class="bar-your-score" style="color:${room.color}">${yourCount}</div>
+                </div>
+                <button class="bar-log-btn" data-game="${game.id}" data-sub="${sg.id}">+1 Drink</button>
+                <div class="bar-others">${others}</div>
               </div>`;
             })
             .join("")}
@@ -221,7 +231,7 @@ function renderGamesList() {
       card.innerHTML = `
         <div class="game-head"><h2>${game.name}</h2></div>
         <div class="subtitle">${game.subtitle}</div>
-        <div class="room-counts">${roomCountsHtml(game.id, null)}</div>
+        ${yourScoreHtml(game.id, null)}
         <div class="wheel-wrap">
           <div class="wheel-outer">
             <div class="wheel-pointer"></div>
@@ -232,6 +242,7 @@ function renderGamesList() {
           <button class="confirm-shot hidden" id="confirm-btn-${game.id}">Log This Shot</button>
           <div class="wheel-note">Binding — whatever it lands on, you drink. No respins.</div>
         </div>
+        <div class="other-rooms">${otherRoomsHtml(game.id, null)}</div>
       `;
       buildWheel(game, card.querySelector(`#wheel-${game.id}`));
       card.querySelector(`#spin-btn-${game.id}`).addEventListener("click", () =>
@@ -250,31 +261,27 @@ function renderGamesList() {
   });
 }
 
-function roomCountsHtml(gameId, subGameId) {
+function yourScoreHtml(gameId, subGameId) {
+  const room = ROOMS[currentUser.room];
+  const n = countFor(gameId, subGameId, room.id);
+  return `
+    <div class="your-score">
+      <div class="your-score-num" style="color:${room.color}">${n}</div>
+      <div class="your-score-label">${room.label} — You</div>
+    </div>`;
+}
+
+function otherRoomsHtml(gameId, subGameId) {
   return Object.values(ROOMS)
+    .filter((r) => r.id !== currentUser.room)
     .map(
       (r) => `
-      <div class="room-count">
-        <div class="num" style="color:${r.color}">${countFor(gameId, subGameId, r.id)}</div>
-        <div class="label">${r.label}</div>
+      <div class="other-room">
+        <span class="rn" style="color:${r.color}">${r.label}</span>
+        <span class="rv">${countFor(gameId, subGameId, r.id)}</span>
       </div>`
     )
     .join("");
-}
-
-function miniCountsHtml(gameId, subGameId) {
-  const counts = Object.values(ROOMS).map((r) => ({
-    label: `R${r.id}`,
-    color: r.color,
-    n: countFor(gameId, subGameId, r.id),
-  }));
-  const max = Math.max(...counts.map((c) => c.n));
-  return counts
-    .map(
-      (c) =>
-        `<span style="color:${c.color}" class="${c.n === max && max > 0 ? "lead" : ""}">${c.label}:${c.n}</span>`
-    )
-    .join(" ");
 }
 
 // ---------------------------------------------------------------
