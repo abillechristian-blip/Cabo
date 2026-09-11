@@ -9,7 +9,7 @@ import {
   query,
   orderBy,
 } from "./firebase.js";
-import { ROOMS, GAMES, ADMIN_PIN } from "./data.js";
+import { ROOMS, GAMES, ADMIN_PIN, HYPE_MESSAGES } from "./data.js";
 
 const LOGS_COL = collection(db, "logs");
 const STORAGE_KEY = "wayneGangUser";
@@ -141,6 +141,19 @@ function countFor(gameId, subGameId, roomId) {
     .reduce((sum, l) => sum + (l.type === "adjustment" ? l.delta : 1), 0);
 }
 
+let toastTimer = null;
+
+function showToast() {
+  const el = document.getElementById("toast");
+  const msg = HYPE_MESSAGES[Math.floor(Math.random() * HYPE_MESSAGES.length)];
+  el.textContent = msg;
+  el.classList.remove("show");
+  void el.offsetWidth; // restart animation even if a toast is already mid-fade
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 1400);
+}
+
 async function logDrink(gameId, subGameId, btnEl) {
   if (btnEl) {
     btnEl.disabled = true;
@@ -154,6 +167,7 @@ async function logDrink(gameId, subGameId, btnEl) {
       type: "log",
       timestamp: serverTimestamp(),
     });
+    showToast();
   } catch (e) {
     console.error(e);
     if (btnEl) {

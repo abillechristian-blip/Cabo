@@ -51,3 +51,24 @@ export const GAMES = [
 ];
 
 export const ADMIN_PIN = "4210";
+
+export const HYPE_MESSAGES = [
+  "Keep drinking!",
+  "You're not drunk yet.",
+  "That's the spirit.",
+  "Logged. Bartender's watching.",
+  "One for the board.",
+  "Wayne Gang approved.",
+  "Hydrate... eventually.",
+  "Somebody tell Jules.",
+  "Legendary.",
+  "Cabo's proud of you.",
+  "Send it.",
+  "The board remembers.",
+  "Bold choice.",
+  "No regrets (yet).",
+  "Highlight reel material.",
+  "Point secured.",
+  "Respect.",
+  "Absolute unit.",
+];
