@@ -142,6 +142,30 @@ function countFor(gameId, subGameId, roomId) {
 }
 
 let toastTimer = null;
+let audioCtx = null;
+
+function playLogSound() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = "sine";
+    const t = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(600, t);
+    osc.frequency.exponentialRampToValueAtTime(1100, t + 0.1);
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    osc.start(t);
+    osc.stop(t + 0.26);
+  } catch (e) {
+    // Audio isn't critical — fail silently if the browser blocks it.
+  }
+}
 
 function showToast() {
   const el = document.getElementById("toast");
@@ -150,8 +174,9 @@ function showToast() {
   el.classList.remove("show");
   void el.offsetWidth; // restart animation even if a toast is already mid-fade
   el.classList.add("show");
+  playLogSound();
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), 1400);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 1000);
 }
 
 async function logDrink(gameId, subGameId, btnEl) {
