@@ -15,8 +15,7 @@ const LOGS_COL = collection(db, "logs");
 const STORAGE_KEY = "wayneGangUser";
 
 let allLogs = []; // live cache of every doc in `logs`, kept in sync via onSnapshot
-let currentUser = null; // { name, room }
-let selectedRoomInLogin = null;
+let currentUser = null; // { room }
 let logoSvgText = null;
 let currentPin = "";
 let wheelResultsByGame = {}; // gameId -> pending shot result awaiting log
@@ -84,41 +83,23 @@ function setupLoginScreen() {
       <div class="swatch"></div>
     `;
     btn.addEventListener("click", () => {
-      selectedRoomInLogin = room.id;
-      [...grid.children].forEach((c) => (c.style.outline = "none"));
-      btn.style.outline = `2px solid ${room.color}`;
-      checkLoginReady();
+      currentUser = { room: room.id };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
+      startMainApp();
     });
     grid.appendChild(btn);
   });
-
-  document.getElementById("name-input").addEventListener("input", checkLoginReady);
-  document.getElementById("enter-btn").addEventListener("click", submitLogin);
-}
-
-function checkLoginReady() {
-  const name = document.getElementById("name-input").value.trim();
-  document.getElementById("enter-btn").disabled = !(name.length > 0 && selectedRoomInLogin);
-}
-
-function submitLogin() {
-  const name = document.getElementById("name-input").value.trim();
-  if (!name || !selectedRoomInLogin) return;
-  currentUser = { name, room: selectedRoomInLogin };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
-  startMainApp();
 }
 
 function startMainApp() {
   setTeamColor(currentUser.room);
   document.getElementById("screen-login").classList.add("hidden");
   document.getElementById("main-app").classList.remove("hidden");
-  document.getElementById("who-name").textContent = currentUser.name;
   document.getElementById("who-room").textContent = ROOMS[currentUser.room].label;
   renderLogoInto(document.getElementById("topbar-logo-slot"), "topbar-logo");
 
   document.getElementById("switch-room-btn").addEventListener("click", () => {
-    if (!confirm("Switch room/name on this phone?")) return;
+    if (!confirm("Switch room on this phone?")) return;
     localStorage.removeItem(STORAGE_KEY);
     location.reload();
   });
@@ -167,7 +148,6 @@ async function logDrink(gameId, subGameId, btnEl) {
   }
   try {
     await addDoc(LOGS_COL, {
-      name: currentUser.name,
       room: currentUser.room,
       gameId,
       subGameId: subGameId || null,
@@ -460,10 +440,13 @@ function renderFeed() {
     .map((l) => {
       const room = ROOMS[l.room];
       const gameName = gameLabel(l.gameId, l.subGameId);
-      const verb = l.type === "adjustment" ? `adjusted ${gameName} (${l.delta > 0 ? "+" : ""}${l.delta})` : `logged ${gameName}`;
+      const text =
+        l.type === "adjustment"
+          ? `Admin adjusted ${gameName} for ${room.label} (${l.delta > 0 ? "+" : ""}${l.delta})`
+          : `${room.label} logged ${gameName}`;
       return `
         <div class="feed-item">
-          <div class="who">${l.name} ${verb} — <span class="room-tag" style="color:${room.color}">${room.label}</span></div>
+          <div class="who" style="color:${room.color}">${text}</div>
           <div class="when">${formatTime(l.timestamp)}</div>
         </div>`;
     })
@@ -650,8 +633,8 @@ function renderAuditList() {
       const label = gameLabel(l.gameId, l.subGameId);
       const desc =
         l.type === "adjustment"
-          ? `${l.name} adjusted ${label} for ${room.label} (${l.delta > 0 ? "+" : ""}${l.delta})`
-          : `${l.name} logged ${label} — ${room.label}`;
+          ? `Admin adjusted ${label} for ${room.label} (${l.delta > 0 ? "+" : ""}${l.delta})`
+          : `${room.label} logged ${label}`;
       return `
         <div class="audit-row">
           <div class="meta">${desc}<br/><span style="color:var(--text-muted)">${formatTime(l.timestamp)}</span></div>
