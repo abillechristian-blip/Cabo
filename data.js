@@ -14,13 +14,13 @@ export const GAMES = [
     id: "marias-pick",
     name: "Maria's Pick",
     type: "simple",
-    subtitle: "Her drink of choice — most by Monday wins.",
+    subtitle: "Mexican Candy Shot — most by Monday wins.",
   },
   {
     id: "jules-pick",
     name: "Jules's Pick",
     type: "simple",
-    subtitle: "His drink of choice — most by Monday wins.",
+    subtitle: "Mango Margarita — most by Monday wins.",
   },
   {
     id: "shot-roulette",
