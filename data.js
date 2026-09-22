@@ -12,15 +12,15 @@ export const ROOMS = {
 export const GAMES = [
   {
     id: "marias-pick",
-    name: "Maria's Pick",
+    name: "Maria's Mexican Candy Shot",
     type: "simple",
-    subtitle: "Mexican Candy Shot — most by Monday wins.",
+    subtitle: "Drink a Mexican Candy Shot from any bar.",
   },
   {
     id: "jules-pick",
-    name: "Jules's Pick",
+    name: "Jules' Mango Margarita",
     type: "simple",
-    subtitle: "Mango Margarita — most by Monday wins.",
+    subtitle: "Drink a Mango Margarita from any bar.",
   },
   {
     id: "shot-roulette",
