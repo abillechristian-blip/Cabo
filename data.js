@@ -33,7 +33,7 @@ export const GAMES = [
     id: "swim-up-bar",
     name: "Swim-Up Bar Circuit",
     type: "multi",
-    subtitle: "Five bars, five separate contests.",
+    subtitle: "Five bars, five separate contests. Mexican Candy Shots and Mango Margaritas don't count here.",
     subGames: [
       { id: "la-iguana", name: "La Iguana" },
       { id: "tequila-bar", name: "Tequila" },
