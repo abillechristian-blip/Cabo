@@ -1021,7 +1021,8 @@ svg.topbar-logo {
 
 .adjust-form select,
 .adjust-form input,
-.reset-form select {
+.reset-form select,
+.reset-form input {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);

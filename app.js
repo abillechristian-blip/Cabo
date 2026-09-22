@@ -15,11 +15,13 @@ import { ROOMS, GAMES, ADMIN_PIN, HYPE_MESSAGES, RESPIN_COOLDOWN_MINUTES } from 
 const LOGS_COL = collection(db, "logs");
 const LOCKS_DOC = doc(db, "meta", "locks");
 const SHOT_SPINS_DOC = doc(db, "meta", "shotSpins");
+const SHOT_SEGMENTS_DOC = doc(db, "meta", "shotSegments");
 const STORAGE_KEY = "wayneGangUser";
 
 let allLogs = []; // live cache of every doc in `logs`, kept in sync via onSnapshot
 let lockedGames = {}; // { [gameId]: true } for games the admin has locked
 let shotSpins = {}; // { [roomId]: lastSpinTimestampMs } for the Shot Roulette cooldown
+let shotSegments = null; // live-editable shot list from the admin panel; null = use the data.js default
 let spinSessions = {}; // { [gameId]: { respinsUsed, locked } } — tracks the free-then-costly respin flow for the current unlogged result
 let pendingSpinGameIds = new Set(); // games with an in-flight spin animation/unconfirmed result — re-renders skip these so a concurrent log elsewhere doesn't wipe the animation
 let currentUser = null; // { room }
@@ -53,6 +55,7 @@ async function boot() {
   listenToLogs();
   listenToLocks();
   listenToShotSpins();
+  listenToShotSegments();
   setupNav();
   setupAdmin();
   setInterval(safeRenderGamesList, 15000); // keeps the respin countdown display fresh
@@ -166,6 +169,22 @@ function listenToShotSpins() {
     },
     (err) => console.error("Shot spin snapshot error", err)
   );
+}
+
+function listenToShotSegments() {
+  onSnapshot(
+    SHOT_SEGMENTS_DOC,
+    (snap) => {
+      shotSegments = snap.exists() && Array.isArray(snap.data().list) ? snap.data().list : null;
+      safeRenderGamesList();
+    },
+    (err) => console.error("Shot segments snapshot error", err)
+  );
+}
+
+function getShotSegments() {
+  const shotGame = GAMES.find((g) => g.id === "shot-roulette");
+  return shotSegments && shotSegments.length ? shotSegments : shotGame.segments;
 }
 
 function countFor(gameId, subGameId, roomId) {
@@ -407,9 +426,10 @@ const SLOT_ITEM_HEIGHT = 58;
 const SLOT_REPEATS = 14;
 
 function buildSlotStrip(game, container) {
+  const segments = getShotSegments();
   let html = "";
   for (let r = 0; r < SLOT_REPEATS; r++) {
-    game.segments.forEach((label) => {
+    segments.forEach((label) => {
       html += `<div class="slot-item" style="height:${SLOT_ITEM_HEIGHT}px;">${label}</div>`;
     });
   }
@@ -419,8 +439,9 @@ function buildSlotStrip(game, container) {
 }
 
 function runSpinAnimation(game) {
+  const segments = getShotSegments();
   const stripEl = document.getElementById(`slot-strip-${game.id}`);
-  const n = game.segments.length;
+  const n = segments.length;
   const winnerIndex = Math.floor(Math.random() * n);
   const targetRepeat = SLOT_REPEATS - 2;
   const targetFlatIndex = targetRepeat * n + winnerIndex;
@@ -433,7 +454,7 @@ function runSpinAnimation(game) {
   stripEl.style.transform = `translateY(${finalY}px)`;
 
   return new Promise((resolve) => {
-    setTimeout(() => resolve(game.segments[winnerIndex]), 3300);
+    setTimeout(() => resolve(segments[winnerIndex]), 3300);
   });
 }
 
@@ -754,6 +775,25 @@ function setupAdmin() {
 
   document.getElementById("adj-submit").addEventListener("click", submitAdjustment);
   document.getElementById("reset-submit").addEventListener("click", submitReset);
+
+  document.getElementById("save-shot-segments-btn").addEventListener("click", saveShotSegments);
+}
+
+async function saveShotSegments() {
+  const raw = document.getElementById("shot-segments-input").value;
+  const list = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (list.length < 2) {
+    alert("Add at least 2 shots, separated by commas.");
+    return;
+  }
+  try {
+    await setDoc(SHOT_SEGMENTS_DOC, { list }, { merge: true });
+  } catch (e) {
+    console.error("Failed to save shot list", e);
+  }
 }
 
 async function clearShotCooldown(roomId) {
@@ -823,6 +863,7 @@ function handlePinKey(k) {
       document.getElementById("screen-admin-pin").classList.add("hidden");
       document.getElementById("screen-admin-panel").classList.remove("hidden");
       renderAuditList();
+      document.getElementById("shot-segments-input").value = getShotSegments().join(", ");
     } else {
       document.getElementById("pin-error").textContent = "Wrong PIN";
       currentPin = "";
