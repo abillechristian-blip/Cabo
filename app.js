@@ -91,7 +91,7 @@ function setupLoginScreen() {
     btn.innerHTML = `
       <div>
         <div class="room-name">${room.label}</div>
-        <div class="room-members">${room.members.length ? room.members.join(", ") : "TBD"}</div>
+        ${room.members.length ? `<div class="room-members">${room.members.join(", ")}</div>` : ""}
       </div>
       <div class="swatch"></div>
     `;
@@ -701,7 +701,7 @@ function renderInfoRooms() {
       (r) => `
       <div class="r">
         <div class="dot" style="background:${r.color}"></div>
-        <div>${r.label} — ${r.members.length ? r.members.join(", ") : "TBD"}</div>
+        <div>${r.label}${r.members.length ? ` — ${r.members.join(", ")}` : ""}</div>
       </div>`
     )
     .join("");
